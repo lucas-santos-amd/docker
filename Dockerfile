@@ -86,8 +86,9 @@ RUN --mount=type=ssh git clone git@github.com:triton-lang/triton.git . && \
     git commit --allow-empty-message --message '' && \
     git reset --hard HEAD~ && \
     # Compile triton
-    cd /triton_dev/triton_default/python/ && \
-    pip install --verbose .
+    cd /triton_dev/triton_default/ && \
+    pip install --requirement python/requirements.txt && \
+    pip install --verbose --no-build-isolation --editable .
 
 #FIXME setup.py not working
 ### Prepare AITER repository and install it
