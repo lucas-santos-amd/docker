@@ -96,7 +96,7 @@ WORKDIR /triton_dev/aiter_default
 RUN --mount=type=ssh git clone --recursive git@github.com:lucas-santos-amd/aiter.git . && \
     # Add remotes of interest:
     git remote add upstream git@github.com:ROCm/aiter.git && \
-    git fetch --all --prune && \
+    #git fetch --all --prune && \
     # Checkout branches of interest:
     git checkout main && \
     # Install pre-commit hooks:
