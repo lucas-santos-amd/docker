@@ -12,6 +12,8 @@ if [ -n "${container_name_suffix}" ]; then
     container_name="${container_name}_${container_name_suffix}"
 fi
 
+mkdir ${HOME}/triton/ 2>/dev/null
+mkdir ${HOME}/aiter/ 2>/dev/null
 # Remove older files
 rm -rf ${HOME}/triton/{*,.*} 2>/dev/null
 rm -rf ${HOME}/aiter/{*,.*} 2>/dev/null

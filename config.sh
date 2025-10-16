@@ -14,5 +14,5 @@ GROUP_NAME=$(id --group --name)
 export GROUP_NAME
 
 ### Image / container information:
-export TRITON_DEV_NAME='triton_dev'
+export TRITON_DEV_NAME='triton_dev_rocm7.0'
 export IMAGE_NAME="${USER_NAME}_${TRITON_DEV_NAME}"

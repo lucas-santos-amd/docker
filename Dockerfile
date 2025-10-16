@@ -1,4 +1,4 @@
-FROM rocm/pytorch:rocm6.3.2_ubuntu24.04_py3.12_pytorch_release_2.4.0
+FROM rocm/pytorch:rocm7.0_ubuntu24.04_py3.12_pytorch_release_2.7.1
 
 ### Build time variables:
 ARG USER_REAL_NAME
@@ -16,7 +16,7 @@ LABEL org.opencontainers.image.authors="${USER_EMAIL}" \
     # No warnings when running `pip` as `root`.
 ENV PIP_ROOT_USER_ACTION=ignore
 ENV TRITON_BUILD_WITH_CCACHE=true
-ENV ROCM_VERSION=6.3
+ENV ROCM_VERSION=7.0
 
 ### CREATE GROUP AND USER
 RUN if getent group ${GROUP_ID}; then \
@@ -36,28 +36,16 @@ RUN apt-get --yes update && \
     # Install packages.
     sed 's/#.*//;/^$/d' /tmp/apt_requirements.txt \
         | xargs apt-get --yes install --no-install-recommends && \
+	apt-get --yes install openssh-client && \
     # Clean up apt.
     apt-get --yes autoremove && \
     apt-get clean && \
     rm --recursive --force /tmp/apt_requirements.txt /var/lib/apt/lists/*
 
 ### Special build of `aqlprofiler` (it's required to use ATT Viewer):
-COPY "deb/rocm${ROCM_VERSION}_hsa-amd-aqlprofile_1.0.0-local_amd64.deb" /tmp
-RUN dpkg --install "/tmp/rocm${ROCM_VERSION}_hsa-amd-aqlprofile_1.0.0-local_amd64.deb" && \
-    rm --recursive --force "/tmp/rocm${ROCM_VERSION}_hsa-amd-aqlprofile_1.0.0-local_amd64.deb"
-
-### pip step:
-COPY pip_requirements.txt /tmp
-    # Uninstall Triton shipped with PyTorch, we'll compile Triton from source.
-RUN pip uninstall --yes triton && \
-    # Install pacakges.
-    pip install --no-cache-dir --requirement /tmp/pip_requirements.txt && \
-    # Install `hip-python` from TestPyPI package index.
-    # (it's required for `tune_gemm.py --icache_flush` option)
-    pip install --no-cache-dir --index-url https://test.pypi.org/simple "hip-python~=${ROCM_VERSION}" && \
-    # Clean up pip.
-    rm --recursive --force /tmp/pip_requirements.txt && \
-    pip cache purge
+#COPY "deb/rocm${ROCM_VERSION}_hsa-amd-aqlprofile_1.0.0-local_amd64.deb" /tmp
+#RUN dpkg --install "/tmp/rocm${ROCM_VERSION}_hsa-amd-aqlprofile_1.0.0-local_amd64.deb" && \
+#    rm --recursive --force "/tmp/rocm${ROCM_VERSION}_hsa-amd-aqlprofile_1.0.0-local_amd64.deb"
 
 ### Configure Git:
 RUN git config --global user.name "${USER_REAL_NAME}" && \
@@ -67,6 +55,19 @@ RUN git config --global user.name "${USER_REAL_NAME}" && \
     # Set GitHub SSH hosts as known hosts:
     mkdir --parents --mode 0700 ~/.ssh && \
     ssh-keyscan github.com >> ~/.ssh/known_hosts
+	
+### pip step:
+COPY pip_requirements.txt /tmp
+    # Uninstall Triton shipped with PyTorch, we'll compile Triton from source.
+RUN pip uninstall --yes triton && \
+    # Install pacakges.
+    pip install --no-cache-dir --requirement /tmp/pip_requirements.txt && \
+    # Install `hip-python` from TestPyPI package index.
+    # (it's required for `tune_gemm.py --icache_flush` option)
+    #pip install --no-cache-dir --index-url https://test.pypi.org/simple "hip-python~=${ROCM_VERSION}" && \
+    # Clean up pip.
+    rm --recursive --force /tmp/pip_requirements.txt && \
+    pip cache purge
 
 ### Prepare Triton repository and compile it:
 WORKDIR /triton_dev/triton_default
@@ -86,7 +87,7 @@ RUN --mount=type=ssh git clone git@github.com:triton-lang/triton.git . && \
     git commit --allow-empty-message --message '' && \
     git reset --hard HEAD~ && \
     # Compile triton
-    cd /triton_dev/triton_default/ && \
+    # cd /triton_dev/triton_default/ && \
     pip install --requirement python/requirements.txt && \
     pip install --verbose --no-build-isolation --editable .
 
@@ -96,14 +97,14 @@ WORKDIR /triton_dev/aiter_default
 RUN --mount=type=ssh git clone --recursive git@github.com:lucas-santos-amd/aiter.git . && \
     # Add remotes of interest:
     git remote add upstream git@github.com:ROCm/aiter.git && \
-    git fetch --all --prune && \
+    # git fetch --all --prune && \
     # Checkout branches of interest:
     git checkout main && \
     # Install pre-commit hooks:
     chmod +x .githooks/install && \
     ./.githooks/install
     # Install into python:
-    # python setup.py develop
+	# python setup.py develop
 
 ### Remove build time SSH stuff:
 RUN rm --recursive --force /root/.ssh
