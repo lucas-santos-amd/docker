@@ -1,4 +1,4 @@
-FROM rocm/pytorch:rocm7.0_ubuntu24.04_py3.12_pytorch_release_2.7.1
+FROM rocm/pytorch:latest
 
 ### Build time variables:
 ARG USER_REAL_NAME
@@ -16,7 +16,7 @@ LABEL org.opencontainers.image.authors="${USER_EMAIL}" \
     # No warnings when running `pip` as `root`.
 ENV PIP_ROOT_USER_ACTION=ignore
 ENV TRITON_BUILD_WITH_CCACHE=true
-ENV ROCM_VERSION=7.0
+#ENV ROCM_VERSION=7.0
 
 ### CREATE GROUP AND USER
 RUN if getent group ${GROUP_ID}; then \
